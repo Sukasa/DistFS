@@ -2,9 +2,10 @@ local function DoDistFS()
   local dfs = require("distfs")
   local fs = require("filesystem")
   local io = require("io")
+  local serialization = require("serialization")
 
   if not fs.exists("/lib/distfs.lua") then
-    io.stderr:write("DistFS missing!  Unable to load DistFS")
+    io.stderr:write("Unable to load DistFS: DistFS library missing!")
     return
   end
 
@@ -23,13 +24,19 @@ local function DoDistFS()
     io.stderr:write("DistFS configuration file missing!  Reverting to defaults...")
   end
 
-  local function toBool(s)
-    return s:lower() == "true"
+  local function toValue(s)
+    s = tostring(s)
+    if tonumber(s) ~= nil then return tonumber(s) end
+    local t = serialization.unserialize(s)
+    if t ~= nil then return t end
+    if s:lower() == "true" then return true end
+    if s:lower() == "nil" then return nil end
+    return false
   end
 
   for line in io.lines("/etc/distfs/distfs.cfg") do 
     local d = split(line)
-    dfs[d[1]] = toBool(d[2])
+    dfs[d[1]] = toValue(d[2])
   end
 
   dfs.init()

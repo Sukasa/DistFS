@@ -72,8 +72,16 @@ function fs.init()
   fs.handles = {}
   fs.filesystems = {}
   --io.write("> . Performing DistFS initialization...\n")
-  for k,_ in pairs(component.list("filesystem")) do
-    fs.componentAdded("init", k, "filesystem")
+  if fs.restrictedMode then
+    for k,_ in pairs(component.list("filesystem")) do
+      if fs.contains(fs.restricted, k) then
+        fs.componentAdded("init", k, "filesystem")
+      end
+    end
+  else  
+    for k,_ in pairs(component.list("filesystem")) do
+      fs.componentAdded("init", k, "filesystem")
+    end
   end
   if fs.allowHotplug then event.listen("component_added", fs.componentAdded) end
   if fs.bootSync and fs.arrayMaster then
@@ -139,7 +147,7 @@ function fs.proxy.open(path, mode)
   checkArg(1, path, "string")
   checkArg(2, mode, "string", "nil")
   
-  mode = mode or "r"
+  mode = tostring(mode or "r")
   local bRead = mode:match("[ra]")
   local bWrite = mode:match("[wa]")
 
@@ -154,7 +162,7 @@ function fs.proxy.open(path, mode)
     handle, err = system.open(path, mode)
   else
     if bRead then
-      return nil, path
+      return nil, path .. "does not exist"
     end
     
     system = fs.mostFreeSpace()
