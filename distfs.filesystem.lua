@@ -161,7 +161,7 @@ function fs.proxy.open(path, mode)
   if system ~= nil then
     handle, err = system.open(path, mode)
   else
-    if bRead then
+    if bRead and not bWrite then
       return nil, path .. "does not exist"
     end
     
